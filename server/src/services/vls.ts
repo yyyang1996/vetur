@@ -14,7 +14,8 @@ import {
   TextDocumentSyncKind,
   DocumentFormattingRequest,
   Disposable,
-  CodeActionParams
+  CodeActionParams,
+  DocumentSymbolParams
 } from 'vscode-languageserver';
 import {
   ColorInformation,
@@ -24,7 +25,6 @@ import {
   Diagnostic,
   DocumentHighlight,
   DocumentLink,
-  DocumentSymbolParams,
   Hover,
   Location,
   SignatureHelp,
@@ -100,10 +100,14 @@ export class VLS {
         : false
     );
 
-    await this.languageModes.init(workspacePath, {
-      infoService: this.vueInfoService,
-      dependencyService: this.dependencyService
-    }, params.initializationOptions['globalSnippetDir']);
+    await this.languageModes.init(
+      workspacePath,
+      {
+        infoService: this.vueInfoService,
+        dependencyService: this.dependencyService
+      },
+      params.initializationOptions['globalSnippetDir']
+    );
 
     this.setupConfigListeners();
     this.setupLSPHandlers();
