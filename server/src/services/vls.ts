@@ -46,6 +46,7 @@ import { DocumentContext, RefactorAction } from '../types';
 import { DocumentService } from './documentService';
 import { VueHTMLMode } from '../modes/template';
 import { logger } from '../log';
+import { defaultVLSConfig, VLSConfig } from '../config';
 
 export class VLS {
   // @Todo: Remove this and DocumentContext
@@ -80,7 +81,9 @@ export class VLS {
   }
 
   async init(params: InitializeParams) {
-    logger.setLevel(_.get(params.initializationOptions.config, ['vetur', 'dev', 'logLevel'], 'INFO'));
+    const initOptions: VLSConfig = _.merge(defaultVLSConfig, params.initializationOptions.config);
+
+    logger.setLevel(initOptions.vetur.dev.logLevel);
 
     const workspacePath = params.rootPath;
     if (!workspacePath) {
@@ -92,18 +95,17 @@ export class VLS {
 
     this.workspacePath = workspacePath;
 
-    await this.vueInfoService.init(this.languageModes);
-    await this.dependencyService.init(
-      workspacePath,
-      params.initializationOptions
-        ? _.get(params.initializationOptions.config, ['vetur', 'useWorkspaceDependencies'], false)
-        : false
-    );
+    this.vueInfoService.init(this.languageModes);
+    await this.dependencyService.init(workspacePath, initOptions.vetur.useWorkspaceDependencies);
 
-    await this.languageModes.init(workspacePath, {
-      infoService: this.vueInfoService,
-      dependencyService: this.dependencyService
-    }, params.initializationOptions['globalSnippetDir']);
+    await this.languageModes.init(
+      workspacePath,
+      {
+        infoService: this.vueInfoService,
+        dependencyService: this.dependencyService
+      },
+      params.initializationOptions['globalSnippetDir']
+    );
 
     this.setupConfigListeners();
     this.setupLSPHandlers();
@@ -114,9 +116,7 @@ export class VLS {
       this.dispose();
     });
 
-    if (params.initializationOptions && params.initializationOptions.config) {
-      this.configure(params.initializationOptions.config);
-    }
+    this.configure(initOptions);
   }
 
   listen() {
